@@ -1,6 +1,7 @@
 # MS8051
 For the MS8051-Enchanced microcontroller.
-
+### Loulan's Lucrative Library ###
+   (furthermore: LLL)
  ---- ---- ----
  This file is property of Lou-HC on github.
  This file is meant to contain many files
