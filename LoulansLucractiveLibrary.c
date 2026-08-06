@@ -205,13 +205,14 @@ void TimerTest(void)
     if (TCON & TIMER0_OVERFLOW_FLAG) // if the timer has overflowed
     {
         //1ms
+        TimerFlag |= TIME_MILISECOND;
         TCON &= ~TIMER0_OVERFLOW_FLAG; //clears the overflow flag.
 
         TimeHMS++;
         if (TimeHMS >= 100)
         {
             TimeHMS = 0;
-            TimerFlags |= TIME_HUNDRED_MS;
+            TimerFlag |= TIME_HUNDRED_MS;
 
             /*
                 0000 0001   tf
@@ -225,8 +226,8 @@ void TimerTest(void)
                 TimeSec = 0;
                 TimerFlag |= TIME_SECONDS; //one second has passed.
                 /*
-                0000 0001
-                0000 0010
+                0000 0001 100ms
+                0000 0010 1 second
                        11
                 */
             }
@@ -234,6 +235,12 @@ void TimerTest(void)
 
         }
     }
+    /*
+    TimerFlag
+    1000 0000 1 Second
+    0000 0010 100 ms
+    0000 0001 1ms
+    */
 }
 int StrLen(char *input)
 {

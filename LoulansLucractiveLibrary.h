@@ -16,8 +16,9 @@ Louis H Combrink
 
 #define TIMER0_OVERFLOW_FLAG    0x20
 
-#define TIME_HUNDRED_MS         0x01
-#define TIME_SECONDS            0x02
+#define TIME_MILISECOND         0X01
+#define TIME_HUNDRED_MS         0x02
+#define TIME_SECONDS            0x80
 
 // -- Const -- //
 // - Modes - //
