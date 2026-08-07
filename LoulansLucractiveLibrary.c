@@ -15,15 +15,59 @@ unsigned char TimerFlag = 0;
 
 void SetPortXOutput(int PortNum);
 
+/*
+Sets the pins of the port that was input as an argument
+to output mode. (All pins.).
+*/
+
 void SetPortXInput(int PortNum);
+
+/*
+Sets the pins of the port that was input as an argument
+to input mode. (All pins.).
+*/
 
 void DisplayNumPort0(int num);
 
+/*
+Takes a number as input and outputs the value to Port 0,
+thus outputting it on the 7-segment display.
+
+Requires P0 to be in output mode.
+*/
+
 void Timer0Init(void);
+
+/*
+Switches the timer on and resets its value(s).
+*/
 
 void TimerTest(void);
 
+/*
+Runs the timer to get the following values in TimerFlag:
+    TimerFlag:
+    0000 0001   1   ms
+    0000 0010   100 ms
+    1000 0000   1   s
+
+Note that this function does not clear TimerFlag.
+It is is thus the responsibility of the user to
+reset it after a condition has been met, if need be.
+
+Upon calling this function, two Static Unsigned Characters
+are declared, meaning that they are ever-present henceforth.
+
+Requires the calling of Timer0Init(), or an action with
+similar results.
+*/
+
 int StrLen(char *input);
+
+/*
+Reads through the string until a '\0' has been found,
+then returns the number of characters read.
+*/
 
 
 // ---- Functions ---- //
@@ -189,19 +233,15 @@ void Timer0Init(void)
 
 void TimerTest(void)
 {
-    //This is the Pollo... Pollon... Polling something method; not the interrupt.
-    //Timer should be running; Init has been called.
+    //This is the Polling method; not the interrupt.
+    //Timer should be running => Init has been called.
 
-
-    /*
-    TimerFlag = 0000 0000
-    One hundred miliseconds stored in 0000 0001
-    One Second stored in 0000 0010
-    */
     static unsigned char TimeHMS = 0;//hundred ms
     static unsigned char TimeSec = 0;
     //static means var is stored in a definite address; always present.
-    //static means that we only initialise it once. If we call the function again, it won't re-initialise the var.
+    //static means that we only initialise it once. If we call the function again,
+    //it won't re-initialise the var.
+
     if (TCON & TIMER0_OVERFLOW_FLAG) // if the timer has overflowed
     {
         //1ms
@@ -209,27 +249,16 @@ void TimerTest(void)
         TCON &= ~TIMER0_OVERFLOW_FLAG; //clears the overflow flag.
 
         TimeHMS++;
-        if (TimeHMS >= 100)
+        if (TimeHMS >= 100) //one hundred ms have passed.
         {
             TimeHMS = 0;
             TimerFlag |= TIME_HUNDRED_MS;
 
-            /*
-                0000 0001   tf
-                0000 0001   0x01
-                0000 0001
-            */
-            //one hundred ms have passed.
             TimeSec++;
-            if (TimeSec >= 10)
+            if (TimeSec >= 10) //one second has passed.
             {
                 TimeSec = 0;
-                TimerFlag |= TIME_SECONDS; //one second has passed.
-                /*
-                0000 0001 100ms
-                0000 0010 1 second
-                       11
-                */
+                TimerFlag |= TIME_SECONDS;
             }
 
 
@@ -242,6 +271,7 @@ void TimerTest(void)
     0000 0001 1ms
     */
 }
+
 int StrLen(char *input)
 {
     int i = 0;
