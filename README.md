@@ -14,6 +14,9 @@ For the MS8051-Enchanced microcontroller.
  (Small Device C Compiler). For usable
  results, please use that.
 
+ The included 8051.h file was given by Mr.
+ Piet van Huyssteenl; all credit goes to them.
+
 All necessary documentation can be found at
 the relevant function in the 
 "LoulansLucrativeLibrary.c" file.
