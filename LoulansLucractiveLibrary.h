@@ -12,9 +12,14 @@ Louis H Combrink
 
 // -- Timer -- //
 #define TIMER_RELOAD_HIGH       0xFC
-#define TIMER_RELOAD_LOW        0x66
+#define TIMER_RELOAD_LOW        0x65
 
 #define TIMER0_OVERFLOW_FLAG    0x20
+
+#define TIMER_OVERFLOW_LIMIT    0xFFFF // 65535
+
+#define CYCLES_PER_SECOND       0xE1000
+#define CYCLES_PER_MIRCOSECOND  0.921600 // 0xE1000 / 10^6
 
 #define TIME_MILISECOND         0X01
 #define TIME_HUNDRED_MS         0x02
@@ -56,6 +61,11 @@ Louis H Combrink
     Pin number       7654 3210
     Pin value        0000 0000
 */
+
+#define HIGH_NIBBLE_TRUE    0xF0
+#define LOW_NIBBLE_TRUE     0x0F
+
+
 // ---- VAR ---- //
 
 extern unsigned char TimerFlag;
@@ -67,6 +77,7 @@ void SetPortXOutput(int PortNum);
 void SetPortXInput(int PortNum);
 void DisplayNumPort0(int num);
 void Timer0Init(void);
+void InitTimer0Polling(int timeMicroSeconds);
 void TimerTest(void);
 
 // --- Gen --- //
