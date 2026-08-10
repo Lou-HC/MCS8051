@@ -42,14 +42,32 @@ void Timer0Init(void);
 Switches the timer on and resets its value(s).
 */
 
+void InitTimer0Polling(int timeMicroSeconds);
+
+/*
+    InitTimer0Polling:
+    1000 0000   1000 units
+    0000 0010   100  units
+    0000 0001   1    unit
+
+    Takes the time in microseconds and initialises Timer0
+    to tick TimerFlag (with the TimerTest function) with
+    that time.
+*/
+
 void TimerTest(void);
 
 /*
 Runs the timer to get the following values in TimerFlag:
+*** Timer0Init: ***
     TimerFlag:
     0000 0001   1   ms
     0000 0010   100 ms
     1000 0000   1   s
+*** InitTimer0Polling: ***
+    0000 0001   1    unit
+    0000 0010   100  units
+    1000 0000   1000 units
 
 Note that this function does not clear TimerFlag.
 It is is thus the responsibility of the user to
@@ -68,6 +86,8 @@ int StrLen(char *input);
 Reads through the string until a '\0' has been found,
 then returns the number of characters read.
 */
+
+int IntPow(int base, int exp);
 
 
 // ---- Functions ---- //
@@ -231,8 +251,60 @@ void Timer0Init(void)
     RL0 =       TIMER_RELOAD_LOW;
 }
 
+void InitTimer0Polling(int timeMicroSeconds)
+{
+    int countCycles = TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * 0.921600);
+    int highVal = countCycles - (0x00FF & countCycles);
+    int lowVal  = countCycles - (0xFF00 & countCycles);
+    highVal = highVal >> 8;
+
+
+    TMOD =      0x01;
+    //Turns it on
+    //TCON =      0x10;
+    //Does the same this; this does not override the whole value
+    TR0 =       1;
+    //Timer high and low values
+    TH0 =       highVal;
+    TL0 =       lowVal;
+
+    //Reload high and low values
+    RH0 =       highVal;
+    RL0 =       lowVal;
+    /*
+    The mathematics behind this is:
+    according to the formula:
+    we have 11 059 200 instructions per second
+    we also have 921600 cycles per second (11 059 200 / 12)
+    take 921600 * time in second
+    = number of instructions in that time.
+    thus, to get the number of clock cycles per given time
+    for the timer, we take:
+    countCycles =  TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * 0.921600)
+
+    the 0.921600 is to account for the fact that timeMicroSeconds is in
+    microseconds, and we use it here as a normal int (no 10^-6), but ergo
+    we include that in in the 921600 => 0,921600.
+
+
+    then we have to find only the high byte of the word, ie
+    only 1111 1111 0000 0000 where the 1's represent any value.
+    but, we want it to be 1111 1111, not 1111 1111 0000 0000. Thus,
+    we bitshift it right 8 times after subtracting the low byte.
+    Similarly, we get the low byte 0000 0000 1111 1111. But, since
+    leading zeroes are ignored, there is no need for a bitshift.
+
+    */
+
+}
+
 void TimerTest(void)
 {
+    /*
+    THIS FUNCTION OUTPUTS DIFFERENT VALUES DEPENDING ON WHICH
+    INIT HAS BEEN CALLED. VIEW THE COMMENT AT THE BOTTOM OF THE
+    FUNCTION FOR MORE INFORMATION.
+    */
     //This is the Polling method; not the interrupt.
     //Timer should be running => Init has been called.
 
@@ -265,10 +337,16 @@ void TimerTest(void)
         }
     }
     /*
+    Timer0Init:
     TimerFlag
-    1000 0000 1 Second
-    0000 0010 100 ms
-    0000 0001 1ms
+    1000 0000 1     Second
+    0000 0010 100   ms
+    0000 0001 1     ms
+
+    InitTimer0Polling:
+    1000 0000   1000 units
+    0000 0010   100  units
+    0000 0001   1    unit
     */
 }
 
@@ -280,6 +358,16 @@ int StrLen(char *input)
         continue;
     }
     return i;
+}
+
+int IntPow(int base, int exp)
+{
+    long int ans = base;
+    for (int i = 1; i <= exp; i++)
+    {
+        ans *= base;
+    }
+    return ans;
 }
 
 
