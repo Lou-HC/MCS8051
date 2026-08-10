@@ -16,7 +16,10 @@ Louis H Combrink
 
 #define TIMER0_OVERFLOW_FLAG    0x20
 
-#define TIMER_OVERFLOW_LIMIT    0xFFFF //65535
+#define TIMER_OVERFLOW_LIMIT    0xFFFF // 65535
+
+#define CYCLES_PER_SECOND       0xE1000
+#define CYCLES_PER_MIRCOSECOND  0.921600 // 0xE1000 / 10^6
 
 #define TIME_MILISECOND         0X01
 #define TIME_HUNDRED_MS         0x02
@@ -61,6 +64,8 @@ Louis H Combrink
 
 #define HIGH_NIBBLE_TRUE    0xF0
 #define LOW_NIBBLE_TRUE     0x0F
+
+
 // ---- VAR ---- //
 
 extern unsigned char TimerFlag;

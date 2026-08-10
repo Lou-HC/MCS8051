@@ -40,6 +40,7 @@ void Timer0Init(void);
 
 /*
 Switches the timer on and resets its value(s).
+This is for 1 unit = 1ms. View TimerFlag under TimerTest.
 */
 
 void InitTimer0Polling(int timeMicroSeconds);
@@ -253,7 +254,7 @@ void Timer0Init(void)
 
 void InitTimer0Polling(int timeMicroSeconds)
 {
-    int countCycles = TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * 0.921600);
+    int countCycles = TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * CYCLES_PER_MIRCOSECOND);
     int highVal = countCycles - (0x00FF & countCycles);
     int lowVal  = countCycles - (0xFF00 & countCycles);
     highVal = highVal >> 8;
@@ -261,8 +262,7 @@ void InitTimer0Polling(int timeMicroSeconds)
 
     TMOD =      0x01;
     //Turns it on
-    //TCON =      0x10;
-    //Does the same this; this does not override the whole value
+
     TR0 =       1;
     //Timer high and low values
     TH0 =       highVal;
