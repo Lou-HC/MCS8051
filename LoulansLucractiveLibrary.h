@@ -28,8 +28,8 @@ Louis H Combrink
 // -- Const -- //
 // - Modes - //
 #define M0_OUTPUT   0x0000
-#define M1_OUTPUT   0XFFFF
-#define M0_INPUT    0xFFFF
+#define M1_OUTPUT   0XFF
+#define M0_INPUT    0xFF
 #define M1_INPUT    0x0000
 
 // - 7 seg nums - //
@@ -69,6 +69,8 @@ Louis H Combrink
 // ---- VAR ---- //
 
 extern unsigned char TimerFlag;
+
+extern unsigned char SEVEN_SEG_NUMS[10];
 
 
 // ---- FUNTIONS ---- //

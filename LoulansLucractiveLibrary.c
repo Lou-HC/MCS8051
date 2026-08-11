@@ -11,6 +11,8 @@ Louis H Combrink
 
 unsigned char TimerFlag = 0;
 
+unsigned char SEVEN_SEG_NUMS[10] = {SEVEN_SEG_0, SEVEN_SEG_1, SEVEN_SEG_2, SEVEN_SEG_3, SEVEN_SEG_4, SEVEN_SEG_5, SEVEN_SEG_6, SEVEN_SEG_7, SEVEN_SEG_8, SEVEN_SEG_9};
+
 // ---- Function Prototypes ---- //
 
 void SetPortXOutput(int PortNum);
@@ -91,7 +93,8 @@ then returns the number of characters read.
 int IntPow(int base, int exp);
 
 
-// ---- Functions ---- //
+// ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
+// ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
 
 void SetPortXOutput(int PortNum)
 {
@@ -231,6 +234,7 @@ void DisplayNumPort0(int num)
     }
 }
 
+
 void Timer0Init(void)
 {
     //Timer mode and control
@@ -293,6 +297,22 @@ void InitTimer0Polling(int timeMicroSeconds)
     we bitshift it right 8 times after subtracting the low byte.
     Similarly, we get the low byte 0000 0000 1111 1111. But, since
     leading zeroes are ignored, there is no need for a bitshift.
+
+    0xFF00 for Low Byte
+    1111 1111 0000 0000
+    If we subtract this from countCycles, we get only the low Byte
+    in the form:
+    0000 0000 XXXX XXXX -> XXXX XXXX
+
+    0x00FF for High Byte
+    0000 0000 1111 1111
+    If we subtract this from countCycles, we get only the high Byte
+    in the form:
+    XXXX XXXX 0000 0000
+    We then shift the bits right 8 times to get:
+    XXXX XXXX
+
+    Where X is either a one or a zero (1, 0).
 
     */
 
