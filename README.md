@@ -20,6 +20,11 @@ For the MS8051-Enchanced microcontroller.
 All necessary documentation can be found at
 the relevant function in the 
 "LoulansLucrativeLibrary.c" file.
+
+To add these files to any CodeBlocks:: file,
+open your project and click "Project" in the
+ribbon, thereafter "Add" and finally choose
+LLL in your storage.
  
  This was made for my university module in
  my first year.
