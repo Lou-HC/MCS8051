@@ -24,7 +24,8 @@ the relevant function in the
 To add these files to any CodeBlocks:: file,
 open your project and click "Project" in the
 ribbon, thereafter "Add" and finally choose
-LLL in your storage.
+LLL in your storage. Keep all other default
+files.
  
  This was made for my university module in
  my first year.
