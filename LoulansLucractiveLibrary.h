@@ -1,7 +1,7 @@
 /*
 ---- Loulan's Lucrative Library ----
-Louis H Combrink
-3 Aug 2026
+Loulan
+Started on 3 Aug 2026
 56243308
 */
 
@@ -81,6 +81,7 @@ void DisplayNumPort0(int num);
 void Timer0Init(void);
 void InitTimer0Polling(int timeMicroSeconds);
 void TimerTest(void);
+void InitSerialComm(void);
 
 // --- Gen --- //
 int StrLen(char* input);

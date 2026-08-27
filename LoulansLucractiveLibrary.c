@@ -1,8 +1,10 @@
 /*
 ---- Loulan's Lucrative Library ----
-Louis H Combrink
-3 Aug 2026
+Loulan
+Started on 3 Aug 2026
 56243308
+
+V 1.7
 */
 #include <mcs51/8051.h>
 #include "LoulansLucractiveLibrary.h"
@@ -91,6 +93,8 @@ then returns the number of characters read.
 */
 
 int IntPow(int base, int exp);
+
+void InitSerialComm(void);
 
 
 // ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
@@ -390,4 +394,29 @@ int IntPow(int base, int exp)
     return ans;
 }
 
+void InitSerialComm(void)
+{
 
+    /*
+    ex.
+    9600, 8, None, 1
+    9600 Board rate -> 9600 bits per second (bps)
+    8 Data bits
+    None -> no parity bit
+    1 Stop bit
+    */
+
+    SCON = 0x50; //in 8 bit variable UART mode, with REN enabled.
+
+    TMOD |= 0x20; //Does not override the current value.
+
+    TH1 = 253;
+    /*
+    Calculated using formula at SCON on datasheet.
+    9600 bps.
+    */
+
+    TR1 = 1; // timer on
+}
+
+//Note to self, make a sendData function. Perhaps also a receiveData.
