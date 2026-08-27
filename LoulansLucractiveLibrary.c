@@ -262,6 +262,9 @@ void Timer0Init(void)
 
 void InitTimer0Polling(int timeMicroSeconds)
 {
+    /*
+    Still in development
+    */
     int countCycles = TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * CYCLES_PER_MIRCOSECOND);
     int highVal = countCycles - (0x00FF & countCycles);
     int lowVal  = countCycles - (0xFF00 & countCycles);
