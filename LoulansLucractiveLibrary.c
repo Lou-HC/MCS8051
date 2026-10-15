@@ -416,6 +416,7 @@ void InitSerialComm(void)
     TH1 = 253;
     /*
     Calculated using formula at SCON on datasheet.
+    Bottom of page 114
     9600 bps.
     */
 
