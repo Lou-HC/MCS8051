@@ -15,7 +15,9 @@ unsigned char TimerFlag = 0;
 
 unsigned char SEVEN_SEG_NUMS[10] = {SEVEN_SEG_0, SEVEN_SEG_1, SEVEN_SEG_2, SEVEN_SEG_3, SEVEN_SEG_4, SEVEN_SEG_5, SEVEN_SEG_6, SEVEN_SEG_7, SEVEN_SEG_8, SEVEN_SEG_9};
 
-// ---- Function Prototypes ---- //
+// ---- Function Prototypes ---- //// ---- Function Prototypes ---- //
+// ---- Function Prototypes ---- //// ---- Function Prototypes ---- //
+// ---- Function Prototypes ---- //// ---- Function Prototypes ---- //
 
 void SetPortXOutput(int PortNum);
 
@@ -60,6 +62,8 @@ void InitTimer0Polling(int timeMicroSeconds);
     that time.
 */
 
+void InitTimer1HighVal(unsigned char timeHigh);
+
 void TimerTest(void);
 
 /*
@@ -95,8 +99,41 @@ then returns the number of characters read.
 int IntPow(int base, int exp);
 
 void InitSerialComm(void);
+/*
+Initialises the serial comms to a default of 9600, 8, N, 1
+*/
+
+void InitSerialCommBaudRate(int baudRate);
+/*
+This function follows the Garbage In Garbage Out principle.
+It has no safeguards against incorrect data.
+It will work with correct Baudrates, and seem to work with incorrect ones.
+Use only with std baudrates, such as 2400; 9600 etc.
+This function also assumes that SMOD0 is 0 (the def value.)
+If that is not the case, make the necessary adjustments.
+*/
+
+void SendByteSerialPort(unsigned char data);
+/*
+Sends a literal byte, i.e 48 => '0'.
+*/
+
+void SendStringSerialPort(unsigned char *data);
+/*
+Sends multiple bytes.
+*/
+
+unsigned char ReadByteSerialPort(void);
+
+void SetupPort1SPI(void);
+
+void SendDataSPI(unsigned char address, unsigned char data);
+
+unsigned char ReadDataSPI (unsigned char address);
 
 
+
+// ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
 // ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
 // ---- Functions ---- // ---- Functions ---- // ---- Functions ---- //
 
@@ -262,12 +299,9 @@ void Timer0Init(void)
 
 void InitTimer0Polling(int timeMicroSeconds)
 {
-    /*
-    Still in development
-    */
-    int countCycles = TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * CYCLES_PER_MIRCOSECOND);
-    int highVal = countCycles - (0x00FF & countCycles);
-    int lowVal  = countCycles - (0xFF00 & countCycles);
+    int countCycles = CYCLES_PER_MIRCOSECOND * timeMicroSeconds + 1;
+    int highVal = TIMER_OVERFLOW_LIMIT - (0x00FF & countCycles);
+    int lowVal  = TIMER_OVERFLOW_LIMIT - (0xFF00 & countCycles);
     highVal = highVal >> 8;
 
 
@@ -283,46 +317,21 @@ void InitTimer0Polling(int timeMicroSeconds)
     RH0 =       highVal;
     RL0 =       lowVal;
     /*
-    The mathematics behind this is:
-    according to the formula:
-    we have 11 059 200 instructions per second
-    we also have 921600 cycles per second (11 059 200 / 12)
-    take 921600 * time in second
-    = number of instructions in that time.
-    thus, to get the number of clock cycles per given time
-    for the timer, we take:
-    countCycles =  TIMER_OVERFLOW_LIMIT - (timeMicroSeconds * 0.921600)
-
-    the 0.921600 is to account for the fact that timeMicroSeconds is in
-    microseconds, and we use it here as a normal int (no 10^-6), but ergo
-    we include that in in the 921600 => 0,921600.
-
-
-    then we have to find only the high byte of the word, ie
-    only 1111 1111 0000 0000 where the 1's represent any value.
-    but, we want it to be 1111 1111, not 1111 1111 0000 0000. Thus,
-    we bitshift it right 8 times after subtracting the low byte.
-    Similarly, we get the low byte 0000 0000 1111 1111. But, since
-    leading zeroes are ignored, there is no need for a bitshift.
-
-    0xFF00 for Low Byte
-    1111 1111 0000 0000
-    If we subtract this from countCycles, we get only the low Byte
-    in the form:
-    0000 0000 XXXX XXXX -> XXXX XXXX
-
-    0x00FF for High Byte
-    0000 0000 1111 1111
-    If we subtract this from countCycles, we get only the high Byte
-    in the form:
-    XXXX XXXX 0000 0000
-    We then shift the bits right 8 times to get:
-    XXXX XXXX
-
-    Where X is either a one or a zero (1, 0).
+   Thank you to Jess E. Blom for this formula.
+   The +1 is to account for how C handles float to integer casting.
+   i.e. This function is accurate to 1us, not 100%.
 
     */
 
+}
+
+void InitTimer1HighVal(unsigned char timeHigh)
+{
+    TMOD |= 0x20; //no override
+
+    TH1 = timeHigh;
+
+    TR1 = 1;//turns it on
 }
 
 void TimerTest(void)
@@ -411,16 +420,248 @@ void InitSerialComm(void)
 
     SCON = 0x50; //in 8 bit variable UART mode, with REN enabled.
 
-    TMOD |= 0x20; //Does not override the current value.
-
-    TH1 = 253;
+    InitTimer1HighVal(253);
     /*
     Calculated using formula at SCON on datasheet.
     Bottom of page 114
     9600 bps.
     */
 
-    TR1 = 1; // timer on
 }
 
-//Note to self, make a sendData function. Perhaps also a receiveData.
+void InitSerialCommBaudRate(int baudRate)
+{
+    unsigned char timer1HighVal;
+    timer1HighVal = ((8192 * baudRate - CYCLES_PER_SECOND) / (32 * baudRate));
+    InitTimer1HighVal(timer1HighVal);
+
+    /*
+    This was calculated with the formula:
+    BR = ((2 ^ SMOD0) / 32) * (freq / (256 - TH1))
+    */
+}
+
+void SendByteSerialPort(unsigned char data)
+{
+    TI = 0;
+    SBUF = data;
+    while (TI == 0);
+}
+
+void sendStringSerialPort(unsigned char *data)
+{
+    unsigned char i = 0;
+
+    do
+    {
+        SendByteSerialPort(data[i]);
+    } while (data[++i] != '\0');
+}
+
+unsigned char ReadByteSerialPort(void)
+{
+    unsigned char InputRx = 0x00;
+    if (RI)
+    {
+        RI = 0;//software clears RI
+        InputRx = SBUF;
+    };
+    return InputRx;
+    /*
+    This function returns either a '\r' or the input character.
+    If the user presses enter or completes the message, it will read
+    as '\r', otherwise it will be some character.
+    Until something is read, the function will return 0x00.
+    */
+}
+void SetupPort1SPI(void)
+{
+    P1M0 &= ~0xF0;  // Reset the high nibble to zeros
+    P1M1 &= ~0xF0;  // Reset the high nibble to zeros
+
+    P1M0 |= 0x20;   // P1.5 MISO set to input // 0010 = 0x2
+    P1M1 |= 0xD0;   // P1.7 = MOSI, P1.6 = CS, P1.4 = CLCK set to Ouputs // 1101 = 0xD
+
+    P1 &= ~0xF0;    // Make the high nibble all zeros
+    SPI_CS_HIGH;
+    SPI_CLK_HIGH;
+}
+
+void SendDataSPI(unsigned char address, unsigned char data)
+{
+    volatile unsigned char SendData = SPI_WRITE_CMD;
+    volatile unsigned char LoopTimes;
+
+    // Note the follwong from the diagram:
+    // 1. The data is clocked on the falling edge
+    // 2. The data on SO will be set when the clck is LOW
+    // 3. The MSB - Most Significant Bit will be send first and the LSB - Least Significant Bit last
+
+    // In the Setup of the port GPIO the CS and CLK was set high
+    // The clock will start LOW and then the CS will be made LOW,
+    // else if the CS go first LOW the CLK will load data into the IC when going LOW
+    // We will have some wat time, a for loop.
+
+    // The following bytes must be send
+    // 1. IC address - see the header file and it must be a write
+    // 2. The address in the MCP23S08 pg 8: TABLE 1-3: CONFIGURATION AND CONTROL REGISTERS
+    // 3. The SetupData that needs to be setup
+
+    SPI_CLK_LOW;
+    SPI_CS_LOW; //we are active.
+     // 8-bits must be send
+    LoopTimes = 8;
+    // 1. IC address - see the header file and it must be a write
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (SendData & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        SPI_CLK_HIGH;
+        SPI_CLK_LOW;
+   }
+    while (--LoopTimes > 0);
+
+    // 8-bits must be send
+    LoopTimes = 8;
+    // 2. The address in the MCP23S08 pg 8: TABLE 1-3: CONFIGURATION AND CONTROL REGISTERS
+    SendData = address;
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (SendData & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        SPI_CLK_HIGH;
+        SPI_CLK_LOW;
+  }
+    while (--LoopTimes > 0);
+
+    // 8-bits must be send
+    LoopTimes = 8;
+    // 3. The SetupData that needs to be setup
+    SendData = data;
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (data & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        SPI_CLK_HIGH;
+        SPI_CLK_LOW;
+   }
+    while (--LoopTimes > 0);
+    // Data Send Done, make CS high
+    SPI_CS_HIGH;
+
+    /*
+    This code was made by Piet Van Huyssteen and altered by Loulan.
+    According to my understanding of the code, the following happens:
+    1. We send SPI_WRITE_CMD to the SPI, meaning that we tell the SPI:
+        "Hey, I will be writing to you."
+    2. Thereafter, we send the address:
+        "Hey, here is where I'll be writing to you."
+    3. Finally, we send the data:
+        "Hey, here is what the new value is."
+    Kachow.
+    */
+}
+
+unsigned char ReadDataSPI (unsigned char address)
+{
+    volatile unsigned char SendData = SPI_READ_CMD;
+    volatile unsigned char LoopTimes;
+    unsigned char ReadByte = 0;
+
+    // Note the following from the diagram:
+    // 1. The data is clocked on the falling edge
+    // 2. The data on SO will be set when the clck is LOW
+    // 3. The MSB - Most Significant Bit will be send first and the LSB - Least Significant Bit last
+
+    // In the Setup of the port GPIO the CS and CLK was set high
+    // The clock will start LOW and then the CS will be made LOW,
+    // else if the CS go first LOW the CLK will load data into the IC when going LOW
+    // We will have some wat time, a for loop.
+
+    // The following bytes must be send
+    // 1. IC address - see the header file and it must be a write
+    // 2. The address in the MCP23S08 pg 8: TABLE 1-3: CONFIGURATION AND CONTROL REGISTERS
+    // 3. The SetupData that needs to be setup
+
+    SPI_CLK_LOW;
+    SPI_CS_LOW;
+    // 8-bits must be send
+    LoopTimes = 8;
+    // 1. IC address - see the header file and it must be a write
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (SendData & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        // wait a moment
+        SPI_CLK_HIGH;
+        SPI_CLK_LOW;
+   }
+    while (--LoopTimes > 0);
+
+    // 8-bits must be send
+    LoopTimes = 8;
+    // 2. The address in the MCP23S08 pg 8: TABLE 1-3: CONFIGURATION AND CONTROL REGISTERS
+    SendData = address;
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (SendData & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        SPI_CLK_HIGH;
+        SPI_CLK_LOW;
+  }
+    while (--LoopTimes > 0);
+
+    // 8-bits must be read
+    LoopTimes = 8;
+    // 3. The SetupData that needs to be setup
+    SendData = 0x00;
+    do
+    {
+        // write the first bit (MSB) onto MOSI PIN, HIGH or LOW by testing the bit
+        if (SendData & 0x80)
+            SPI_MOSI_HIGH;
+        else
+            SPI_MOSI_LOW;
+        // Shift to the next bit
+        SendData <<= 1;
+        SPI_CLK_HIGH;
+        ReadByte <<= 0x01;
+        if (SPI_MISO_INPUT)
+            ReadByte |= 0x01;
+        SPI_CLK_LOW;
+  //      for (Wait = 0; Wait < WAIT_TIME; Wait++);
+   }
+    while (--LoopTimes > 0);
+    // Data Read Done, make CS high
+    SPI_CS_HIGH;
+
+    return ReadByte;
+}
+
+
+
