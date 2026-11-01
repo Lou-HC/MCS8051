@@ -439,6 +439,7 @@ void InitSerialCommBaudRate(int baudRate)
 {
     unsigned char timer1HighVal;
     timer1HighVal = ((8192 * baudRate - CYCLES_PER_SECOND) / (32 * baudRate));
+    SCON = 0x50; //in 8 bit variable UART mode, with REN enabled.
     InitTimer1HighVal(timer1HighVal);
 
     /*
