@@ -124,6 +124,12 @@ Sends multiple bytes.
 */
 
 unsigned char ReadByteSerialPort(void);
+/*
+This function returns either a '\r' or the input character.
+If the user presses enter or completes the message, it will read
+as '\r', otherwise it will be some character.
+Until something is read, the function will return 0x00.
+*/
 
 void SetupPort1SPI(void);
 
