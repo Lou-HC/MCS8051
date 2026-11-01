@@ -1,5 +1,5 @@
 # MS8051
-For the MS8051-Enchanced microcontroller.
+For the MCS8051-Enchanced microcontroller.
 ### Loulan's Lucrative Library ###
    (furthermore: LLL)
  ---- ---- ----
