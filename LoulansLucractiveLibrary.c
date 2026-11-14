@@ -310,10 +310,14 @@ void InitTimer0Polling(int timeMicroSeconds)
     int lowVal  = TIMER_OVERFLOW_LIMIT - (0xFF00 & countCycles);
     highVal = highVal >> 8;
 
-
+    /*
+    0x01 may seem incorrect, however consider that it works.
+    0x01 is the 16 bit auto reload mode.
+    Don't question it.
+    */
     TMOD =      0x01;
+    
     //Turns it on
-
     TR0 =       1;
     //Timer high and low values
     TH0 =       highVal;
