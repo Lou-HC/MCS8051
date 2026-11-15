@@ -4,7 +4,7 @@ Loulan
 Started on 3 Aug 2026
 56243308
 
-V 1.7
+V 1.81
 */
 #include <mcs51/8051.h>
 #include "LoulansLucractiveLibrary.h"
@@ -89,6 +89,18 @@ Requires the calling of Timer0Init(), or an action with
 similar results.
 */
 
+void Timer0Overflow __interrupt (TIMER0_INTERRUPT_VECTOR);
+/*
+Needs the Timer0 interrupt to be enabled.
+Furthermore, do not use this and polling at the same time; that's just asking for trouble.
+Next, note that this file is absent in the LLL header file. That's because it should never be
+called; it should trigger automatically upon overflow.
+
+It may be such that this function never executes. A fix that usually works is to move the declaration
+and definition to your main file. In the case where this is done, remove it from LLL to avoid
+conflicts.
+*/
+
 int StrLen(char *input);
 
 /*
@@ -136,6 +148,19 @@ void SetupPort1SPI(void);
 void SendDataSPI(unsigned char address, unsigned char data);
 
 unsigned char ReadDataSPI (unsigned char address);
+
+void InitDefIntrrpts(void);
+/*
+Only Turns EA and Timer0Overflow on.
+*/
+
+void InitIntrrpts(unsigned char EA_Enabled, unsigned char PCA_Enabled, unsigned char Timer2_Enabled,
+                  unsigned char SPORT_Enabled, unsigned char Timer1_Enabled,
+                  unsigned char EX1_Enabled, unsigned char Timer0_Enabled, unsigned char EX0_Enabled);
+/*
+This may come as a surprise, but this function initialises the interrupts.
+Only a 1 or 0 is valid; anything else is regarded as a 0.
+*/
 
 
 
@@ -316,7 +341,7 @@ void InitTimer0Polling(int timeMicroSeconds)
     Don't question it.
     */
     TMOD =      0x01;
-    
+
     //Turns it on
     TR0 =       1;
     //Timer high and low values
@@ -394,6 +419,12 @@ void TimerTest(void)
     0000 0010   100  units
     0000 0001   1    unit
     */
+}
+
+void Timer0Overflow __interrupt (TIMER0_INTERRUPT_VECTOR)
+{
+    TF0 = 0;//Well, we've overflowed. No need to do it again. Yet....
+    //Do whatever
 }
 
 int StrLen(char *input)
@@ -673,6 +704,39 @@ unsigned char ReadDataSPI (unsigned char address)
 
     return ReadByte;
 }
+
+void InitDefIntrrpts(void)
+{
+    /*
+    According to my very limited understanding of how interrupts work,
+    The number after each interrupt is the number found in chapter 9 of the
+    datasheet (9. Interrupts) minus one.
+    For example, the timer0 overflow is 2 on the datasheet of polling priority.
+    Therefore, we use 1 (since 2 - 1 == 1; shocker).
+    */
+    //Only EA and Timer0Overflow
+    IEN0 = 0x82;
+}
+
+void InitIntrrpts(unsigned char EA_Enabled, unsigned char PCA_Enabled, unsigned char Timer2_Enabled,
+                  unsigned char SPORT_Enabled, unsigned char Timer1_Enabled,
+                  unsigned char EX1_Enabled, unsigned char Timer0_Enabled, unsigned char EX0_Enabled)
+{
+    //Jeez, what a list.
+    IEN0 |=     (EA_Enabled & 1)        << 7;
+    IEN0 |=     (PCA_Enabled & 1)       << 6;
+    IEN0 |=     (Timer2_Enabled & 1)    << 5;
+    IEN0 |=     (SPORT_Enabled   & 1)   << 4;
+    IEN0 |=     (Timer1_Enabled & 1)    << 3;
+    IEN0 |=     (EX1_Enabled & 1)       << 2;
+    IEN0 |=     (Timer0_Enabled & 1)    << 1;
+    IEN0 |=     (EX0_Enabled & 1);
+    /*
+    The & 1 is included so that the only valid inputs are 1 or 0.
+    */
+}
+
+
 
 
 

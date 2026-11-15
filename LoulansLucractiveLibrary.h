@@ -62,6 +62,8 @@ On the SPI 7-Seg display, the f & g LED's are swapped.
 
 #define TIMER_OVERFLOW_LIMIT    0xFFFF // 65535_10
 
+#define TIMER0_INTERRUPT_VEDCTOR    1
+
 #define CYCLES_PER_SECOND       0xE1000 //921600
 #define CYCLES_PER_MIRCOSECOND  0.921600 // (0xE1000 / 10^6)
 //Used in TimerTest
@@ -167,6 +169,9 @@ unsigned char ReadByteSerialPort(void);
 void SetupPort1SPI(void);
 void SendDataSPI(unsigned char address, unsigned char data);
 unsigned char ReadDataSPI (unsigned char address);
+// -- Intrrpts -- //
+void InitDefIntrrpts(void);
+void InitIntrrpts(unsigned char EA_Enabled, unsigned char PCA_Enabled, unsigned char Timer2_Enabled,unsigned char SPORT_Enabled, unsigned char Timer1_Enabled,unsigned char EX1_Enabled, unsigned char Timer0_Enabled, unsigned char EX0_Enabled);
 
 // --- Gen --- //
 int StrLen(char* input);
